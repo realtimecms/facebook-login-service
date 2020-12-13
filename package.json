@@ -1,0 +1,12 @@
+{
+  "name": "facebook-login-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "setup": "INSTALL=true node index.js",
+    "test": "NODE_ENV=test blue-tape tests/*"
+  },
+  "author": "Michał Łaszczewski <michal@emikse.com>"
+}
