@@ -34,13 +34,18 @@ const Login = definition.model({
       type: User
     }
   },
+  indexes: {
+    byUser: {
+      property: "user"
+    }
+  },
   crud: {
     options: {
       access: (params, {client, service, visibilityTest}) => {
         return client.roles.includes('admin')
       }
     }
-  },
+  }
 })
 
 definition.action({
@@ -223,17 +228,23 @@ definition.event({
   name: "UserDeleted",
   properties: {
     user: {
-      type: User,
-      idOnly: true
+      type: User
     }
   },
   async execute({ user }) {
-    await app.dao.request(['database', 'query', app.databaseName, `(${
-        async (input, output, { user }) =>
-            await input.table("facebookLogin_Login").onChange((obj, oldObj) => {
-              if(obj && obj.user == user) output.table("facebookLogin_Login").delete(obj.id)
-            })
-    })`, { user }])
+    await app.dao.request(['database', 'query'], app.databaseName, `(${
+        async (input, output, { table, index, user }) => {
+          const prefix = `"${user}"_`
+          await (await input.index(index)).range({
+            gte: prefix,
+            lte: prefix+"\xFF\xFF\xFF\xFF"
+          }).onChange((ind, oldInd) => {
+            if(ind && ind.to) {
+              output.table(table).delete(ind.to)
+            }
+          })
+        }
+    })`, { table: Login.tableName, index: Login.tableName + '_byUser', user })
   }
 })
 
